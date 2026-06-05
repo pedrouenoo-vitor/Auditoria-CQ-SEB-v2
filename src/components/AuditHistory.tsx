@@ -14,13 +14,15 @@ interface AuditHistoryProps {
   onEditAudit: (audit: Audit) => void;
   onDeleteAudit: (id: string) => Promise<boolean>;
   onDuplicateAudit: (audit: Audit) => void;
+  currentUserRole?: string;
 }
 
 export default function AuditHistory({
   audits,
   onEditAudit,
   onDeleteAudit,
-  onDuplicateAudit
+  onDuplicateAudit,
+  currentUserRole
 }: AuditHistoryProps) {
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -310,13 +312,23 @@ export default function AuditHistory({
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
-                          <button
-                            onClick={() => onDeleteAudit(a.id)}
-                            className="p-1 text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition animate-in zoom-in-0 duration-400"
-                            title="Excluir do histórico"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {currentUserRole === 'Auditor' ? (
+                            <button
+                              disabled
+                              className="p-1 text-slate-300 dark:text-slate-700 cursor-not-allowed opacity-50"
+                              title="Seu perfil de Auditor não possui permissão para excluir relatórios"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => onDeleteAudit(a.id)}
+                              className="p-1 text-slate-400 hover:text-rose-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition animate-in zoom-in-0 duration-400"
+                              title="Excluir do histórico"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

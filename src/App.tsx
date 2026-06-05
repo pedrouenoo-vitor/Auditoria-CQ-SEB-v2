@@ -14,10 +14,13 @@ import AuditForm from './components/FormAudit';
 import AuditHistory from './components/AuditHistory';
 import ReportsManager from './components/ReportsManager';
 import SupabaseSyncOverlay from './components/SupabaseSyncOverlay';
+import LoginScreen from './components/LoginScreen';
+import UserManager from './components/UserManager';
 import { Settings, Info, Check, RefreshCw } from 'lucide-react';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<User>(() => databaseService.getCurrentUser());
+  const [currentUser, setCurrentUser] = useState<User | null>(() => databaseService.getCurrentUser());
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>(() => databaseService.getUsers());
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('qualicontrol_dark');
     return saved === 'true';
@@ -48,6 +51,21 @@ export default function App() {
     }
   }, [darkMode]);
 
+  // Secure and redirect tabs based on profile access limits
+  useEffect(() => {
+    if (currentUser) {
+      const allowedTabs = currentUser.perfil === 'Administrador' 
+        ? ['dashboard', 'audits', 'history', 'products', 'defects', 'reports', 'users']
+        : currentUser.perfil === 'Supervisor'
+        ? ['dashboard', 'audits', 'history', 'products', 'defects', 'reports']
+        : ['audits', 'history']; // Auditor
+
+      if (!allowedTabs.includes(activeTab)) {
+        setActiveTab(allowedTabs[0]);
+      }
+    }
+  }, [currentUser, activeTab]);
+
   // Load all records from database service
   const loadData = useCallback(async () => {
     try {
@@ -72,10 +90,27 @@ export default function App() {
     loadData();
   }, [loadData]);
 
-  // Handle current simulated profile switched
+  // Handle profile changed or switched with password verification (from header dropdown)
   const handleUserChange = async (usr: User) => {
     setCurrentUser(usr);
     await databaseService.saveCurrentUser(usr);
+    setRegisteredUsers(databaseService.getUsers()); // Sync dropdown with updated registered users
+  };
+
+  const handleLogout = async () => {
+    await databaseService.logoutUser();
+    setCurrentUser(null);
+  };
+
+  const handleLoginSuccess = (user: User) => {
+    setCurrentUser(user);
+    databaseService.saveCurrentUser(user);
+    setRegisteredUsers(databaseService.getUsers());
+  };
+
+  const handleRefreshUsers = () => {
+    setRegisteredUsers(databaseService.getUsers());
+    loadData();
   };
 
   // Product Actions
@@ -160,6 +195,15 @@ export default function App() {
     return res;
   };
 
+  if (!currentUser) {
+    return (
+      <LoginScreen
+        users={registeredUsers}
+        onLoginSuccess={handleLoginSuccess}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-850 dark:text-slate-100 flex flex-col transition-all duration-300">
       
@@ -167,6 +211,7 @@ export default function App() {
       <Header
         currentUser={currentUser}
         onUserChange={handleUserChange}
+        onLogout={handleLogout}
         darkMode={darkMode}
         setDarkMode={setDarkMode}
         activeTab={activeTab}
@@ -213,6 +258,7 @@ export default function App() {
                 onEditAudit={handleEditAudit}
                 onDeleteAudit={handleDeleteAudit}
                 onDuplicateAudit={handleDuplicateAudit}
+                currentUserRole={currentUser.perfil}
               />
             )}
 
@@ -239,6 +285,13 @@ export default function App() {
                 audits={audits}
                 defects={defects}
                 auditDefects={auditDefects}
+              />
+            )}
+
+            {activeTab === 'users' && currentUser.perfil === 'Administrador' && (
+              <UserManager
+                currentUser={currentUser}
+                onRefreshData={handleRefreshUsers}
               />
             )}
           </div>

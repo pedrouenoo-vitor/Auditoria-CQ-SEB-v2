@@ -10,6 +10,7 @@ export interface User {
   nome: string;
   email: string;
   perfil: UserRole;
+  senha?: string;
 }
 
 export type ProductType = 'Ventilador' | 'Liquidificador' | 'Panela de Pressão';

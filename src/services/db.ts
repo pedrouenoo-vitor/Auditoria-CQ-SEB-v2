@@ -25,6 +25,7 @@ const AUDIT_PHOTOS_KEY = 'qualicontrol_audit_photos';
 const CHangelog_KEY = 'qualicontrol_changelog';
 const CURRENT_USER_KEY = 'qualicontrol_current_user';
 const SUPABASE_CONFIG_KEY = 'qualicontrol_supabase_config';
+const USERS_KEY = 'qualicontrol_users';
 
 // Loaded from environment first, or fallbacks from browser localStorage config
 const getSupabaseConfig = () => {
@@ -278,12 +279,31 @@ const initialChangeLog: ChangeLog[] = [
   { id: 'cl4', timestamp: '2026-06-01T08:00:00', usuario: 'Supervisor Técnico', perfil: 'Supervisor', acao: 'Importou', detalhes: 'Seeding inicial executado para banco de dados local com sucesso.' }
 ];
 
-const defaultUser: User = {
-  id: 'usr1',
-  nome: 'Lucas Albuquerque',
-  email: 'lucas.albuquerque@indfios.com.br',
-  perfil: 'Supervisor' // default role
-};
+const initialUsers: User[] = [
+  {
+    id: 'usr_admin',
+    nome: 'Ana Carolina (Diretora)',
+    email: 'ana.carolina@indfios.com.br',
+    perfil: 'Administrador',
+    senha: 'admin'
+  },
+  {
+    id: 'usr_supervisor',
+    nome: 'Lucas Albuquerque',
+    email: 'lucas.albuquerque@indfios.com.br',
+    perfil: 'Supervisor',
+    senha: '123'
+  },
+  {
+    id: 'usr_auditor',
+    nome: 'Carlos Eduardo (Inspetor)',
+    email: 'carlos.eduardo@indfios.com.br',
+    perfil: 'Auditor',
+    senha: 'abc'
+  }
+];
+
+const defaultUser: User = initialUsers[1]; // Lucas as default Supervisor
 
 // INITIALIZE LOCAL STORAGE ROUTINES
 const initializeLocalData = () => {
@@ -304,6 +324,9 @@ const initializeLocalData = () => {
   }
   if (!localStorage.getItem(CHangelog_KEY)) {
     localStorage.setItem(CHangelog_KEY, JSON.stringify(initialChangeLog));
+  }
+  if (!localStorage.getItem(USERS_KEY)) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(initialUsers));
   }
   if (!localStorage.getItem(CURRENT_USER_KEY)) {
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(defaultUser));
@@ -379,7 +402,17 @@ export const databaseService = {
   },
 
   // USERS
-  getCurrentUser: (): User => {
+  getCurrentUser: (): User | null => {
+    try {
+      const usr = localStorage.getItem(CURRENT_USER_KEY);
+      if (usr) return JSON.parse(usr);
+    } catch (e) {
+      console.error(e);
+    }
+    return null; // Return null if not logged in to show Login Screen
+  },
+
+  getCurrentUserOrFallback: (): User => {
     try {
       const usr = localStorage.getItem(CURRENT_USER_KEY);
       if (usr) return JSON.parse(usr);
@@ -397,6 +430,93 @@ export const databaseService = {
       acao: 'Editou',
       detalhes: `Perfil de acesso alterado para ${user.perfil} (${user.nome}).`
     });
+  },
+
+  logoutUser: async () => {
+    const current = databaseService.getCurrentUser();
+    if (current) {
+      await databaseService.addLog({
+        usuario: current.nome,
+        perfil: current.perfil,
+        acao: 'Editou',
+        detalhes: `Usuário ${current.nome} deslogou do sistema.`
+      });
+    }
+    localStorage.removeItem(CURRENT_USER_KEY);
+  },
+
+  getUsers: (): User[] => {
+    try {
+      const usersStr = localStorage.getItem(USERS_KEY);
+      if (usersStr) return JSON.parse(usersStr);
+    } catch (e) {
+      console.error(e);
+    }
+    return initialUsers;
+  },
+
+  saveUser: async (user: Omit<User, 'id'> & { id?: string }): Promise<User> => {
+    const users = databaseService.getUsers();
+    let saved: User;
+    const isEdit = !!user.id;
+
+    if (isEdit) {
+      // Find original password if not provided in edit
+      const original = users.find(u => u.id === user.id);
+      saved = {
+        ...user,
+        senha: user.senha || original?.senha || '654321'
+      } as User;
+
+      const updated = users.map(u => u.id === user.id ? saved : u);
+      localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+
+      const adminUser = databaseService.getCurrentUserOrFallback();
+      await databaseService.addLog({
+        usuario: adminUser.nome,
+        perfil: adminUser.perfil,
+        acao: 'Editou',
+        detalhes: `Usuário ${saved.nome} (${saved.perfil}) atualizado pelo Administrador.`
+      });
+    } else {
+      saved = {
+        ...user,
+        id: 'usr_' + Math.random().toString(36).substr(2, 9),
+        senha: user.senha || '123456'
+      } as User;
+      
+      users.push(saved);
+      localStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+      const adminUser = databaseService.getCurrentUserOrFallback();
+      await databaseService.addLog({
+        usuario: adminUser.nome,
+        perfil: adminUser.perfil,
+        acao: 'Criou',
+        detalhes: `Novo usuário ${saved.nome} (${saved.perfil}) cadastrado com sucesso.`
+      });
+    }
+
+    return saved;
+  },
+
+  deleteUser: async (id: string): Promise<boolean> => {
+    const users = databaseService.getUsers();
+    const target = users.find(u => u.id === id);
+    if (!target) return false;
+
+    const filtered = users.filter(u => u.id !== id);
+    localStorage.setItem(USERS_KEY, JSON.stringify(filtered));
+
+    const adminUser = databaseService.getCurrentUserOrFallback();
+    await databaseService.addLog({
+      usuario: adminUser.nome,
+      perfil: adminUser.perfil,
+      acao: 'Excluiu',
+      detalhes: `Usuário removido: ${target.nome} (${target.perfil}).`
+    });
+
+    return true;
   },
 
   // PRODUCTS
