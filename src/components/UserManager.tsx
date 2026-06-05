@@ -33,6 +33,11 @@ export default function UserManager({ currentUser, onRefreshData }: UserManagerP
   // Revealed passwords state in list
   const [revealedPasswordsId, setRevealedPasswordsId] = useState<{[key: string]: boolean}>({});
 
+  // Sub Tab controlling users vs process lines
+  const [subTab, setSubTab] = useState<'users' | 'lines'>('users');
+  const [processLines, setProcessLines] = useState<string[]>(() => databaseService.getProcessLines());
+  const [newLineName, setNewLineName] = useState('');
+
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const loadUsersList = () => {
@@ -120,6 +125,33 @@ export default function UserManager({ currentUser, onRefreshData }: UserManagerP
     }
   };
 
+  const handleAddLine = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const name = newLineName.trim();
+    if (!name) return;
+    if (processLines.includes(name)) {
+      showNotification('error', 'Esta linha de processo já está cadastrada.');
+      return;
+    }
+    const updated = await databaseService.saveProcessLine(name);
+    setProcessLines(updated);
+    setNewLineName('');
+    showNotification('success', 'Nova linha de processo cadastrada com sucesso!');
+  };
+
+  const handleDeleteLine = async (lineName: string) => {
+    if (window.confirm(`Tem certeza de que deseja remover a "${lineName}"?`)) {
+      try {
+        await databaseService.deleteProcessLine(lineName);
+        const updated = databaseService.getProcessLines();
+        setProcessLines(updated);
+        showNotification('success', 'Linha de processo removida com sucesso!');
+      } catch (err) {
+        showNotification('error', 'Erro ao remover linha de processo.');
+      }
+    }
+  };
+
   const toggleRevealPassword = (id: string) => {
     setRevealedPasswordsId(prev => ({
       ...prev,
@@ -148,21 +180,23 @@ export default function UserManager({ currentUser, onRefreshData }: UserManagerP
         <div>
           <h2 className="text-xl font-bold font-sans tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <Users className="w-5 h-5 text-sky-500" />
-            <span>Painel Administrativo - Cadastro de Usuários</span>
+            <span>Painel Administrativo - Controle de Acessos e Processos</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Gerencie colaboradores técnicos, defina níveis de acesso e altere senhas de autenticação.
+            Gerencie colaboradores técnicos, defina níveis de acesso, senhas e controle as linhas industriais ativas de processo.
           </p>
         </div>
 
-        <button
-          onClick={handleOpenNew}
-          id="btn-add-new-user"
-          className="flex items-center justify-center space-x-1.5 px-4 py-2 bg-sky-500 hover:bg-sky-600 border border-sky-455 rounded-lg text-xs font-bold text-slate-950 cursor-pointer transition-colors active:scale-[0.98] shrink-0"
-        >
-          <Plus className="w-4 h-4 text-slate-950" />
-          <span>Cadastrar Usuário</span>
-        </button>
+        {subTab === 'users' && (
+          <button
+            onClick={handleOpenNew}
+            id="btn-add-new-user"
+            className="flex items-center justify-center space-x-1.5 px-4 py-2 bg-sky-500 hover:bg-sky-600 border border-sky-455 rounded-lg text-xs font-bold text-slate-950 cursor-pointer transition-colors active:scale-[0.98] shrink-0"
+          >
+            <Plus className="w-4 h-4 text-slate-950" />
+            <span>Cadastrar Usuário</span>
+          </button>
+        )}
       </div>
 
       {notification && (
@@ -183,8 +217,39 @@ export default function UserManager({ currentUser, onRefreshData }: UserManagerP
         </div>
       )}
 
-      {/* Role Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* Sub-tabs selector style row */}
+      <div className="flex bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-1 rounded-xl self-start inline-flex">
+        <button
+          type="button"
+          onClick={() => setSubTab('users')}
+          className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            subTab === 'users'
+              ? 'bg-white dark:bg-slate-950 text-sky-500 shadow-sm font-extrabold'
+              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>Colaboradores ({users.length})</span>
+        </button>
+        
+        <button
+          type="button"
+          onClick={() => setSubTab('lines')}
+          className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+            subTab === 'lines'
+              ? 'bg-white dark:bg-slate-950 text-sky-500 shadow-sm font-extrabold'
+              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+          }`}
+        >
+          <Plus className="w-4 h-4 text-slate-500" />
+          <span>Linhas de Processo ({processLines.length})</span>
+        </button>
+      </div>
+
+      {subTab === 'users' && (
+        <>
+          {/* Role Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Administrador */}
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 flex items-center space-x-4 shadow-sm">
           <div className="p-3 rounded-lg bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400">
@@ -368,6 +433,91 @@ export default function UserManager({ currentUser, onRefreshData }: UserManagerP
           </div>
         )}
       </div>
+    </>
+  )}
+
+      {subTab === 'lines' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-300">
+          
+          {/* Form to Register Line of Process */}
+          <div className="p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm h-fit space-y-4">
+            <div>
+              <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase font-mono tracking-wider">
+                Nova Linha de Processo
+              </h3>
+              <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                Adicione novas células, linhas de injetoras ou postos de montagem técnica.
+              </p>
+            </div>
+
+            <form onSubmit={handleAddLine} className="space-y-3">
+              <div className="space-y-1">
+                <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono">
+                  Identificação da Linha DE PROCESSO *
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Linha de Montagem D"
+                  value={newLineName}
+                  onChange={(e) => setNewLineName(e.target.value)}
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-all font-semibold"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center space-x-1.5 px-4 py-2 bg-sky-500 hover:bg-sky-600 border border-sky-455 text-slate-955 font-bold rounded-lg text-xs cursor-pointer transition-all active:scale-[0.98]"
+              >
+                <Plus className="w-4 h-4 text-slate-950" />
+                <span>Salvar Linha de Processo</span>
+              </button>
+            </form>
+          </div>
+
+          {/* List of Registered Process Lines */}
+          <div className="md:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider">
+                Linhas de Montagem Ativas ({processLines.length})
+              </span>
+              <span className="text-[11px] font-mono text-slate-400 leading-none">Ambiente do Chão de Fábrica</span>
+            </div>
+
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {processLines.length === 0 ? (
+                <div className="p-12 text-center text-slate-400">
+                  Nenhuma linha de processo cadastrada.
+                </div>
+              ) : (
+                processLines.map((line) => (
+                  <div key={line} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition-all">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-lg bg-sky-500/5 dark:bg-sky-500/10 flex items-center justify-center border border-sky-500/20">
+                        <span className="text-sky-500 font-mono text-[10px] font-bold">LP</span>
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{line}</p>
+                        <p className="text-[10px] font-mono text-slate-400">Status: Operativa / Ativa no Sistema</p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteLine(line)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-955/30 transition-all cursor-pointer border border-transparent hover:border-slate-200"
+                      title="Excluir Linha de Processo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+        </div>
+      )}
 
       {/* Slide / Overlay Modal Form */}
       {isOpenModal && (

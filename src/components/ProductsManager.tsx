@@ -38,6 +38,7 @@ export default function ProductsManager({
   const [versao, setVersao] = useState('');
   const [capacidade, setCapacidade] = useState('');
   const [material, setMaterial] = useState('');
+  const [localBurnIn, setLocalBurnIn] = useState('');
 
   // CSV Import States
   const [csvText, setCsvText] = useState('');
@@ -66,6 +67,7 @@ export default function ProductsManager({
     setVersao('');
     setCapacidade('');
     setMaterial('');
+    setLocalBurnIn('');
     setIsOpenModal(true);
   };
 
@@ -80,6 +82,7 @@ export default function ProductsManager({
     setVersao(p.versao || '');
     setCapacidade(p.capacidade || '');
     setMaterial(p.material || '');
+    setLocalBurnIn(p.localBurnIn || '');
     setIsOpenModal(true);
   };
 
@@ -95,6 +98,7 @@ export default function ProductsManager({
     };
 
     if (editId) payload.id = editId;
+    if (localBurnIn) payload.localBurnIn = localBurnIn;
 
     if (tipo === 'Ventilador') {
       if (potencia) payload.potencia = potencia;
@@ -378,7 +382,12 @@ Panela de Pressão,Panela Safe 9L,PAN-SAFE9,,,9.0L,Inox Polido,V2.3`}
                             {p.versao && <span className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded font-mono text-[10px]">Versão: {p.versao}</span>}
                           </>
                         )}
-                        {!p.potencia && !p.cor && !p.versao && !p.capacidade && !p.material && (
+                        {p.localBurnIn && (
+                          <span className="bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 px-2 py-0.5 rounded font-semibold font-mono text-[10px]">
+                            Burn-in: {p.localBurnIn}
+                          </span>
+                        )}
+                        {!p.potencia && !p.cor && !p.versao && !p.capacidade && !p.material && !p.localBurnIn && (
                           <span className="text-slate-400 italic">Nenhum adicional informado</span>
                         )}
                       </div>
@@ -477,6 +486,17 @@ Panela de Pressão,Panela Safe 9L,PAN-SAFE9,,,9.0L,Inox Polido,V2.3`}
                     value={codigo}
                     onChange={(e) => setCodigo(e.target.value)}
                     className="w-full text-xs p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white uppercase focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1 col-span-2">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono w-full block">Local Burn-in</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Bancada de Teste 04 / Estufa de Ensaio 3"
+                    value={localBurnIn}
+                    onChange={(e) => setLocalBurnIn(e.target.value)}
+                    className="w-full text-xs p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-medium"
                   />
                 </div>
               </div>

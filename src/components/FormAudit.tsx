@@ -8,6 +8,7 @@ import {
   Save, AlertTriangle, Plus, Minus, Camera, Upload, Trash2, ShieldCheck, RefreshCw, Layers, Calendar
 } from 'lucide-react';
 import { Product, Defect, Audit, User } from '../types';
+import { databaseService } from '../services/db';
 
 interface AuditFormProps {
   products: Product[];
@@ -45,9 +46,16 @@ export default function AuditForm({
   // Selected product state
   const [selectedProductId, setSelectedProductId] = useState('');
   
+  const processLines = useMemo(() => {
+    return databaseService.getProcessLines();
+  }, []);
+
   // Basic Audit info
   const [lote, setLote] = useState('');
-  const [linha, setLinha] = useState('Linha de Montagem A');
+  const [linha, setLinha] = useState(() => {
+    const lines = databaseService.getProcessLines();
+    return lines[0] || 'Linha de Montagem A';
+  });
   const [turno, setTurno] = useState<'Turno 1' | 'Turno 2' | 'Turno 3'>('Turno 1');
 
   // Quantities states
@@ -277,10 +285,14 @@ export default function AuditForm({
                   onChange={(e) => setLinha(e.target.value)}
                   className="w-full text-xs p-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-950 dark:text-white font-semibold cursor-pointer"
                 >
-                  <option value="Linha de Montagem A">Linha de Montagem A</option>
-                  <option value="Linha de Montagem B">Linha de Montagem B</option>
-                  <option value="Linha de Prensas C">Linha de Prensas C</option>
-                  <option value="Célula de Teste Térmico D">Célula de Teste Térmico D</option>
+                  {processLines.map((line) => (
+                    <option key={line} value={line}>
+                      {line}
+                    </option>
+                  ))}
+                  {processLines.length === 0 && (
+                    <option value="">Nenhuma linha cadastrada</option>
+                  )}
                 </select>
               </div>
             </div>

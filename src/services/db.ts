@@ -26,6 +26,7 @@ const CHangelog_KEY = 'qualicontrol_changelog';
 const CURRENT_USER_KEY = 'qualicontrol_current_user';
 const SUPABASE_CONFIG_KEY = 'qualicontrol_supabase_config';
 const USERS_KEY = 'qualicontrol_users';
+const PROCESS_LINES_KEY = 'qualicontrol_process_lines';
 
 // Loaded from environment first, or fallbacks from browser localStorage config
 const getSupabaseConfig = () => {
@@ -328,6 +329,10 @@ const initializeLocalData = () => {
   if (!localStorage.getItem(USERS_KEY)) {
     localStorage.setItem(USERS_KEY, JSON.stringify(initialUsers));
   }
+  if (!localStorage.getItem(PROCESS_LINES_KEY)) {
+    const defaultLines = ['Linha de Montagem A', 'Linha de Montagem B', 'Linha de Prensas C'];
+    localStorage.setItem(PROCESS_LINES_KEY, JSON.stringify(defaultLines));
+  }
   if (!localStorage.getItem(CURRENT_USER_KEY)) {
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(defaultUser));
   }
@@ -516,6 +521,49 @@ export const databaseService = {
       detalhes: `Usuário removido: ${target.nome} (${target.perfil}).`
     });
 
+    return true;
+  },
+
+  // PROCESS LINES
+  getProcessLines: (): string[] => {
+    try {
+      const linesStr = localStorage.getItem(PROCESS_LINES_KEY);
+      if (linesStr) return JSON.parse(linesStr);
+    } catch (e) {
+      console.error(e);
+    }
+    return ['Linha de Montagem A', 'Linha de Montagem B', 'Linha de Prensas C'];
+  },
+
+  saveProcessLine: async (lineName: string): Promise<string[]> => {
+    const lines = databaseService.getProcessLines();
+    const trimmed = lineName.trim();
+    if (!trimmed) return lines;
+    if (!lines.includes(trimmed)) {
+      lines.push(trimmed);
+      localStorage.setItem(PROCESS_LINES_KEY, JSON.stringify(lines));
+      const adminUser = databaseService.getCurrentUserOrFallback();
+      await databaseService.addLog({
+        usuario: adminUser.nome,
+        perfil: adminUser.perfil,
+        acao: 'Criou',
+        detalhes: `Nova linha de processo cadastrada: ${trimmed}.`
+      });
+    }
+    return lines;
+  },
+
+  deleteProcessLine: async (lineName: string): Promise<boolean> => {
+    const lines = databaseService.getProcessLines();
+    const filtered = lines.filter(l => l !== lineName);
+    localStorage.setItem(PROCESS_LINES_KEY, JSON.stringify(filtered));
+    const adminUser = databaseService.getCurrentUserOrFallback();
+    await databaseService.addLog({
+      usuario: adminUser.nome,
+      perfil: adminUser.perfil,
+      acao: 'Excluiu',
+      detalhes: `Linha de processo removida: ${lineName}.`
+    });
     return true;
   },
 

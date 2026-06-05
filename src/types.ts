@@ -26,6 +26,7 @@ export interface Product {
   versao?: string;         // Ventilador & Panela de Pressão
   capacidade?: string;     // Liquidificador & Panela de Pressão
   material?: string;       // Panela de Pressão
+  localBurnIn?: string;    // Local de Teste Burn-in
 }
 
 export interface Defect {
