@@ -138,18 +138,11 @@ export default function AuditForm({
     }
   }, [products, selectedProductId]);
 
-  // Recommend specific defects based on active product's category type
-  const recommendedDefects = useMemo(() => {
-    if (!activeProduct) return [];
-    
-    return defects.filter(d => {
-      // Match categories / types based on codes
-      if (activeProduct.tipo === 'Ventilador') return d.codigo.startsWith('V');
-      if (activeProduct.tipo === 'Liquidificador') return d.codigo.startsWith('L');
-      if (activeProduct.tipo === 'Panela de Pressão') return d.codigo.startsWith('P');
-      return true;
-    });
-  }, [activeProduct, defects]);
+  // Exibe todos os defeitos cadastrados para qualquer produto selecionado
+const recommendedDefects = useMemo(() => {
+  if (!activeProduct) return [];
+  return defects;
+}, [activeProduct, defects]);
 
   const handleDefectCountChange = (defectId: string, delta: number) => {
     setSelectedDefects(curr => {
