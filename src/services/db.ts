@@ -333,9 +333,7 @@ const initializeLocalData = () => {
     const defaultLines = ['Linha de Montagem A', 'Linha de Montagem B', 'Linha de Prensas C'];
     localStorage.setItem(PROCESS_LINES_KEY, JSON.stringify(defaultLines));
   }
-  if (!localStorage.getItem(CURRENT_USER_KEY)) {
-    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(defaultUser));
-  }
+  // Sessão controlada via sessionStorage — não persiste entre navegadores
 };
 
 initializeLocalData();
