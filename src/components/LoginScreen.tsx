@@ -21,7 +21,6 @@ export default function LoginScreen({ onLoginSuccess, users }: LoginScreenProps)
 
   useEffect(() => {
     if (users.length > 0 && !selectedUserId) {
-      // Find default or first user
       const supervisor = users.find(u => u.perfil === 'Supervisor');
       setSelectedUserId(supervisor ? supervisor.id : users[0].id);
     }
@@ -50,13 +49,11 @@ export default function LoginScreen({ onLoginSuccess, users }: LoginScreenProps)
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center px-4 relative overflow-hidden font-sans">
       
-      {/* Decorative gradient backdrops */}
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-sky-500/10 blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-80 h-80 rounded-full bg-teal-500/10 blur-3xl" />
 
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-8 backdrop-blur-md shadow-2xl z-10 transition-all duration-300">
         
-        {/* Brand Header */}
         <div className="text-center mb-8">
           <div className="inline-flex bg-sky-500 p-3 rounded-2xl text-slate-950 shadow-lg shadow-sky-500/20 mb-3 animate-bounce">
             <Shield className="w-8 h-8" />
@@ -73,23 +70,20 @@ export default function LoginScreen({ onLoginSuccess, users }: LoginScreenProps)
           </p>
         </div>
 
-        {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* User Selection */}
           <div className="space-y-1.5">
-            <label id="lbl-user-select" className="block text-xs font-semibold text-slate-300 tracking-wide">
+            <label className="block text-xs font-semibold text-slate-300 tracking-wide">
               Colaborador / Perfil
             </label>
             <div className="relative">
               <select
-                id="select-user-login"
                 value={selectedUserId}
                 onChange={(e) => {
                   setSelectedUserId(e.target.value);
                   setErrorMsg('');
                   setPassword('');
                 }}
-                className="w-full px-4 py-3 bg-slate-950 border border-slate-850 hover:border-slate-700/60 focus:border-sky-500 rounded-xl text-slate-100 text-sm focus:outline-none transition-colors appearance-none cursor-pointer"
+                className="w-full px-4 py-3 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-sky-500 rounded-xl text-slate-100 text-sm focus:outline-none transition-colors appearance-none cursor-pointer"
               >
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>
@@ -110,9 +104,8 @@ export default function LoginScreen({ onLoginSuccess, users }: LoginScreenProps)
             )}
           </div>
 
-          {/* Password Input */}
           <div className="space-y-1.5">
-            <label id="lbl-password-login" className="block text-xs font-semibold text-slate-300 tracking-wide">
+            <label className="block text-xs font-semibold text-slate-300 tracking-wide">
               Senha de Acesso
             </label>
             <div className="relative">
@@ -120,7 +113,6 @@ export default function LoginScreen({ onLoginSuccess, users }: LoginScreenProps)
                 <Key className="w-4 h-4" />
               </div>
               <input
-                id="input-password-login"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Insira sua senha..."
                 value={password}
@@ -128,12 +120,11 @@ export default function LoginScreen({ onLoginSuccess, users }: LoginScreenProps)
                   setPassword(e.target.value);
                   setErrorMsg('');
                 }}
-                className="w-full pl-10 pr-10 py-3 bg-slate-950 border border-slate-850 hover:border-slate-700/60 focus:border-sky-500 rounded-xl text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors"
+                className="w-full pl-10 pr-10 py-3 bg-slate-950 border border-slate-800 hover:border-slate-700 focus:border-sky-500 rounded-xl text-slate-100 text-sm focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors"
                 required
               />
               <button
                 type="button"
-                id="btn-toggle-login-password-visibility"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300 cursor-pointer"
               >
@@ -142,25 +133,22 @@ export default function LoginScreen({ onLoginSuccess, users }: LoginScreenProps)
             </div>
           </div>
 
-          {/* Erros */}
           {errorMsg && (
-            <div className="flex items-start space-x-2 bg-rose-950/40 border border-rose-800/50 text-rose-300 p-3 rounded-lg text-xs" id="login-error-container">
+            <div className="flex items-start space-x-2 bg-rose-950/40 border border-rose-800/50 text-rose-300 p-3 rounded-lg text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
           )}
 
-          {/* Action button */}
           <button
             type="submit"
-            id="btn-login-submit"
             className="w-full py-3 bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-slate-950 font-bold text-sm tracking-wide rounded-xl shadow-lg shadow-sky-500/10 cursor-pointer transition-colors active:scale-[0.98]"
           >
             Acessar Sistema
           </button>
         </form>
 
-       
+      </div>
 
       <p className="mt-6 text-[10px] font-mono text-slate-600">
         Ambiente de Auditoria em Conformidade com ISO 9001 e IATF 16949-V2
