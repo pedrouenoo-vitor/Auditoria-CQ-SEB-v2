@@ -160,28 +160,7 @@ export default function LoginScreen({ onLoginSuccess, users }: LoginScreenProps)
           </button>
         </form>
 
-        {/* Informative Tip Box on default setup */}
-        <div className="mt-8 bg-slate-950/40 border border-slate-850 rounded-xl p-4">
-          <p className="text-[10px] font-bold font-mono uppercase tracking-wider text-sky-400 mb-2">
-            🔑 Credenciais Padrão Cadastradas:
-          </p>
-          <div className="space-y-1.5 text-[10px] font-mono text-slate-400">
-            <div className="flex justify-between border-b border-slate-900 pb-1">
-              <span>Ana Carolina (Admin)</span>
-              <span className="font-bold text-white">Senha: admin</span>
-            </div>
-            <div className="flex justify-between border-b border-slate-900 pb-1">
-              <span>Lucas Albuquerque (Supervisor)</span>
-              <span className="font-bold text-white">Senha: 123</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Carlos Eduardo (Auditor)</span>
-              <span className="font-bold text-white">Senha: abc</span>
-            </div>
-          </div>
-        </div>
-
-      </div>
+       
 
       <p className="mt-6 text-[10px] font-mono text-slate-600">
         Ambiente de Auditoria em Conformidade com ISO 9001 e IATF 16949-V2
